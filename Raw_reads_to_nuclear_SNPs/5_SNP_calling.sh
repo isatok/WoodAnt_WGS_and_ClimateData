@@ -1,4 +1,4 @@
-# 6_SNP_calling.sh
+# 5_SNP_calling.sh
 
 
 cd /scratch/project_2001443/vcf

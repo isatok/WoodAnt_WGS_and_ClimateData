@@ -1,4 +1,4 @@
-# 5_clip_overlaps_RG.sh
+# 4_clip_overlaps_RG.sh
 
 
 # Create the input file list

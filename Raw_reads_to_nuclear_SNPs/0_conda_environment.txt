@@ -1,0 +1,4 @@
+# my_seqdata environment
+conda create -n my_seqdata
+conda activate my_seqdata
+conda install -c bioconda vt bamutil vcflib tabix mosdepth

@@ -1,0 +1,13 @@
+screen
+module load bioconda/3
+source activate freebayes
+cd /scratch/project_2001443/mt_WFhyb_Sapis/mtDNA_0422_ms/
+/appl/soft/bio/bioconda/miniconda3/envs/freebayes/bin/freebayes-puhti \
+  -time 72 \
+  -regions ref/mtDNA_50kb_regions.txt \
+  -f ref/mtDNA_wFhyb_Sapis.fa \
+  -L vcf/bam.list \
+  -k --genotype-qualities --pooled-continuous -F 0.05 --ploidy 1 --min-coverage 1000 \ 
+  -out vcf/mt_F005_C1000_all_samples_raw.vcf
+
+# --pooled-continuous is a frequency-based approach

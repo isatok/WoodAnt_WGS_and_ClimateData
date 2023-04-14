@@ -1,4 +1,4 @@
-# 4_RGs_coverage.sh
+# 3_RGs_coverage.sh
 
 
 cd /scratch/project_2001443/bam/nodupl

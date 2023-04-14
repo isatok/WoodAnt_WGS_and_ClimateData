@@ -1,4 +1,4 @@
-# 3_mapping.sh
+# 2_mapping.sh
 
 
 #!/bin/bash -l

@@ -1,4 +1,4 @@
-# 7_VCF_filtering.sh
+# 6_VCF_filtering.sh
 
 ## Since different parts of the pipeline require different resources, the master script here is split in four scripts
 

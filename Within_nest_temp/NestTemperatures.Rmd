@@ -1,0 +1,356 @@
+---
+title: "Ant nest Int.-Ext. Temperatures"
+author: "Mirkka Jones, Jukka Sirén"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  pdf_document: 
+    keep_tex: yes
+  html_document: default
+---
+
+```{r, echo=FALSE}
+
+#Loads and installs with dependencies, if necessary, three packages:
+
+if("rmarkdown" %in% rownames(installed.packages()) == FALSE) {
+install.packages("rmarkdown", repos = "https://cloud.r-project.org", dependencies = TRUE)}
+
+if("brms" %in% rownames(installed.packages()) == FALSE) {
+install.packages("rgeos", repos = "https://cloud.r-project.org", dependencies = TRUE)}
+
+suppressPackageStartupMessages({
+  library(rmarkdown)
+  library(brms)
+  library(ggplot2)
+})
+
+```
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+
+```{r Import combined ant data for modelling, echo=FALSE}
+
+Model_data = read.csv2("../data/Model_data_2020_2021_comb.csv")
+Model_data$Year <- as.factor(Model_data$Year)
+
+```
+
+```{r brms parameters, echo=FALSE}
+
+prior <- c(set_prior("normal(0,2)", class = "sd"),
+            set_prior("normal(0,2)", class = "b"))
+niter <- 4000
+seed <- 2371
+cores <- 1
+silent <- 2
+refresh <- 0
+save_pars <- save_pars(all = TRUE)
+reloo <- TRUE
+
+```
+
+### Linear mixed effects model: January
+
+Tests:
+
+1) Do hybrid vs aquilonia nests differ in their internal temperature accounting for external T, and for inter-year effects (2021 cooler): YES (hybrid sites warmer). Internal and external temperatures are also positively related.
+
+2) = As above, but with an interaction between hybrid status and external temperature: YES (hybrid sites warmer). The linear effect of external temperature on internal temperature is not significant, but there is an interaction: Hybrid nests tend to heat more internally - per unit increase in external temperature - than aquilonia nests.
+
+Model fitting good: Rhat values 1.01 or less and ESS values greater than 600.
+
+Model comparison: Interaction model fits the data slightly better.
+
+```{r ant_temp_models_Jan, echo=FALSE}
+
+selmonth = Model_data[grep("-01-", Model_data$Date),]
+#Exclude Svanvik nests from 2021, since full months' data are only available for May onwards.
+exclude = grep("Svanvik", selmonth$site)[grep("Svanvik", selmonth$site) %in% grep("2021", selmonth$Date)]
+selmonth = selmonth[-exclude,]
+
+model_int_ext = brm(InternalT ~ status + Year + ExternalT + (1|nestID), data = selmonth, 
+                    prior = prior, iter = niter, seed = seed, cores = cores, silent = silent,
+                    refresh = refresh, save_pars = save_pars,
+                    file = "../models/Jan_int_ext")
+
+model_interaction = brm(InternalT ~ Year + status*ExternalT + (1|nestID), data = selmonth, 
+                    prior = prior, iter = niter, seed = seed, cores = cores, silent = silent,
+                    refresh = refresh, save_pars = save_pars,
+                    file = "../models/Jan_interaction")
+
+summary(model_int_ext)
+p <- conditional_effects(model_int_ext, effects = "ExternalT:status")
+p <- plot(p,plot=FALSE) [[1]] + ggtitle("January")
+plot(p)
+p <- conditional_effects(model_int_ext, effects = "ExternalT:status")
+p <- plot(p,plot=FALSE) [[1]] + ggtitle("January")
+plot(p)
+
+summary(model_interaction)
+p <- conditional_effects(model_interaction, effects = "ExternalT:status")
+p <- plot(p,plot=FALSE) [[1]] + ggtitle("January interaction")
+plot(p)
+
+a<-loo(model_int_ext,model_interaction, reloo=reloo)
+print("Model comparison:")
+print(a$diffs)
+
+```
+
+### Linear mixed effects model: February
+
+Tests:
+1) Do hybrid vs aquilonia nests differ in their internal temperature accounting for external T, and for inter-year effects (2021 cooler): YES (hybrid sites warmer). Internal and external temperatures are also positively related.
+2) As above, but with an interaction between hybrid status and external temperature: YES (hybrid sites warmer). The linear effect of external temperature on internal temperature is significant, but there is no interaction between external temperature and hybrid nest status. 
+
+Model fitting good: Rhat values 1.01 or less and ESS values greater than 500.
+
+Model comparison: Interaction does not improve the model fit. Both models equally good.
+
+
+```{r ant_temp_models_Feb, echo=FALSE}
+
+selmonth = Model_data[grep("-02-", Model_data$Date),]
+#Exclude Svanvik nests from 2021, since full months' data are only available for May onwards.
+exclude = grep("Svanvik", selmonth$site)[grep("Svanvik", selmonth$site) %in% grep("2021", selmonth$Date)]
+selmonth = selmonth[-exclude,]
+
+model_int_ext = brm(InternalT ~ status + Year + ExternalT + (1|nestID), data = selmonth, 
+                    prior = prior, iter = niter, seed = seed, cores = cores, silent = silent,
+                    refresh = refresh, save_pars = save_pars,
+                    file = "../models/Feb_int_ext")
+
+model_interaction = brm(InternalT ~ Year + status*ExternalT + (1|nestID), data = selmonth, 
+                    prior = prior, iter = niter, seed = seed, cores = cores, silent = silent,
+                    refresh = refresh, save_pars = save_pars,
+                    file = "../models/Feb_interaction")
+
+summary(model_int_ext)
+p <- conditional_effects(model_int_ext, effects = "ExternalT:status") 
+p <- plot(p,plot=FALSE) [[1]] + ggtitle("February")
+plot(p)
+summary(model_interaction)
+p <- conditional_effects(model_interaction, effects = "ExternalT:status") 
+p <- plot(p,plot=FALSE) [[1]] + ggtitle("February interaction")
+plot(p)
+
+a<-loo(model_int_ext,model_interaction, reloo=reloo)
+print("Model comparison:")
+print(a$diffs)
+
+```
+
+### Linear mixed effects model: March
+
+Tests:
+1) Do hybrid vs aquilonia nests differ in their internal temperature accounting for external T, and for inter-year effects (2021 cooler): YES (hybrid sites warmer). Internal and external temperatures are also positively related.
+2) As above, but with an interaction between hybrid status and external temperature: YES (hybrid sites warmer). The linear effect of external temperature on internal temperature is not significant, nor is there an interaction between external temperature and hybrid nest status. 
+
+Model fitting good: Rhat values 1.01 or less and ESS values greater than 500.
+
+Model comparison: Interaction does not improve the model fit. Both models equally good.
+
+
+```{r ant_temp_models_Mar, echo=FALSE}
+
+selmonth = Model_data[grep("-03-", Model_data$Date),]
+#Exclude Svanvik nests from 2021, since full months' data are only available for May onwards.
+exclude = grep("Svanvik", selmonth$site)[grep("Svanvik", selmonth$site) %in% grep("2021", selmonth$Date)]
+selmonth = selmonth[-exclude,]
+
+model_int_ext = brm(InternalT ~ status + Year + ExternalT + (1|nestID), data = selmonth, 
+                    prior = prior, iter = niter, seed = seed, cores = cores, silent = silent,
+                    refresh = refresh, save_pars = save_pars,
+                    file = "../models/Mar_int_ext")
+
+model_interaction = brm(InternalT ~ Year + status*ExternalT + (1|nestID), data = selmonth, 
+                    prior = prior, iter = niter, seed = seed, cores = cores, silent = silent,
+                    refresh = refresh, save_pars = save_pars,
+                    file = "../models/Mar_interaction")
+
+summary(model_int_ext)
+p <- conditional_effects(model_int_ext, effects = "ExternalT:status") 
+p <- plot(p,plot=FALSE) [[1]] + ggtitle("March")
+plot(p)
+summary(model_interaction)
+p <- conditional_effects(model_interaction, effects = "ExternalT:status") 
+p <- plot(p,plot=FALSE) [[1]] + ggtitle("March interaction")
+plot(p)
+
+a<-loo(model_int_ext,model_interaction, reloo=reloo)
+print("Model comparison:")
+print(a$diffs)
+
+
+```
+
+
+### Linear mixed effects model: April
+
+Tests:
+1) Do hybrid vs aquilonia nests differ in their internal temperature accounting for external T, and for inter-year effects (2021 cooler): YES (hybrid sites warmer). Internal and external temperatures are also positively related.
+2) As above, but with an interaction between hybrid status and external temperature: NO (linear effect of hybrid nest status is not significant). However, the linear effect of external temperature on internal temperature is significant, as is its interaction with hybrid nest status. i.e., hybrid nests tend to warm more per unit increase in external temperature than aquilonia nests.
+
+Model fitting good: Rhat values 1.01 or less and ESS values greater than 700.
+
+Model comparison: Interaction model significantly improves the model fit to the data.
+
+```{r ant_temp_models_Apr, echo=FALSE}
+
+selmonth = Model_data[grep("-04-", Model_data$Date),]
+#Exclude Svanvik nests from 2021, since full months' data are only available for May onwards.
+exclude = grep("Svanvik", selmonth$site)[grep("Svanvik", selmonth$site) %in% grep("2021", selmonth$Date)]
+selmonth = selmonth[-exclude,]
+
+model_int_ext = brm(InternalT ~ status + Year + ExternalT + (1|nestID), data = selmonth, 
+                    prior = prior, iter = niter, seed = seed, cores = cores, silent = silent,
+                    refresh = refresh, save_pars = save_pars,
+                    file = "../models/Apr_int_ext")
+
+model_interaction = brm(InternalT ~ Year + status*ExternalT + (1|nestID), data = selmonth, 
+                    prior = prior, iter = niter, seed = seed, cores = cores, silent = silent,
+                    refresh = refresh, save_pars = save_pars,
+                    file = "../models/Apr_interaction")
+
+summary(model_int_ext)
+p <- conditional_effects(model_int_ext, effects = "ExternalT:status") 
+p <- plot(p,plot=FALSE) [[1]] + ggtitle("April")
+plot(p)
+summary(model_interaction)
+p <- conditional_effects(model_interaction, effects = "ExternalT:status") 
+p <- plot(p,plot=FALSE) [[1]] + ggtitle("April interaction")
+plot(p)
+
+a<-loo(model_int_ext,model_interaction, reloo=reloo)
+print("Model comparison:")
+print(a$diffs)
+
+
+```
+
+### Linear mixed effects model: May
+
+Tests:
+1) Do hybrid vs aquilonia nests differ in their internal temperature accounting for external T, and for year effects (2021 cooler): YES (hybrid sites warmer). Internal and external temperatures are also positively related.
+2) As above, but with an interaction between hybrid status and external temperature: NO (linear effect of hybrid nest status is not significant). However, the linear effect of external temperature on internal temperature is significant, as is its interaction with hybrid nest status. i.e., hybrid nests tend to warm more per unit increase in external temperature than aquilonia nests.
+
+Model fitting good: Rhat values 1.01 or less and ESS values greater than 500.
+
+Model comparison: Interaction model fits the data slightly better.
+
+```{r ant_temp_models_May, echo=FALSE}
+
+selmonth = Model_data[grep("-05-", Model_data$Date),]
+
+model_int_ext = brm(InternalT ~ status + Year + ExternalT + (1|nestID), data = selmonth, 
+                    prior = prior, iter = niter, seed = seed, cores = cores, silent = silent,
+                    refresh = refresh, save_pars = save_pars,
+                    file = "../models/May_int_ext")
+
+model_interaction = brm(InternalT ~ Year + status*ExternalT + (1|nestID), data = selmonth, 
+                    prior = prior, iter = niter, seed = seed, cores = cores, silent = silent,
+                    refresh = refresh, save_pars = save_pars,
+                    file = "../models/May_interaction")
+
+summary(model_int_ext)
+p <- conditional_effects(model_int_ext, effects = "ExternalT:status") 
+p <- plot(p,plot=FALSE) [[1]] + ggtitle("May")
+plot(p)
+summary(model_interaction)
+p <- conditional_effects(model_interaction, effects = "ExternalT:status") 
+p <- plot(p,plot=FALSE) [[1]] + ggtitle("May interaction")
+plot(p)
+
+a<-loo(model_int_ext,model_interaction, reloo=reloo)
+print("Model comparison:")
+print(a$diffs)
+
+
+```
+
+### Linear mixed effects model: June
+
+Tests:
+1) Do hybrid vs aquilonia nests differ in their internal temperature accounting for external T, and for year effects (2021 cooler): YES (hybrid sites warmer). Internal and external temperatures are also positively related.
+2) As above, but with an interaction between hybrid status and external temperature: YES (hybrid sites warmer). The linear effect of external temperature on internal temperature is also significant, as is its interaction (negative!) with hybrid nest status. Hybrid nests tend to warm less per unit increase in external temperature than aquilonia nests.
+
+Model fitting good: Rhat values 1.01 or less and ESS values greater than 400.
+
+Model comparison: Interaction model significantly improves the model fit to the data.
+
+```{r ant_temp_models_Jun, echo=FALSE}
+
+selmonth = Model_data[grep("-06-", Model_data$Date),]
+
+model_int_ext = brm(InternalT ~ status + Year + ExternalT + (1|nestID), data = selmonth, 
+                    prior = prior, iter = niter, seed = seed, cores = cores, silent = silent,
+                    refresh = refresh, save_pars = save_pars,
+                    file = "../models/Jun_int_ext")
+
+model_interaction = brm(InternalT ~ Year + status*ExternalT + (1|nestID), data = selmonth, 
+                    prior = prior, iter = niter, seed = seed, cores = cores, silent = silent,
+                    refresh = refresh, save_pars = save_pars,
+                    file = "../models/Jun_interaction")
+
+summary(model_int_ext)
+p <- conditional_effects(model_int_ext, effects = "ExternalT:status") 
+p <- plot(p,plot=FALSE) [[1]] + ggtitle("June")
+plot(p)
+summary(model_interaction)
+p <- conditional_effects(model_interaction, effects = "ExternalT:status") 
+p <- plot(p,plot=FALSE) [[1]] + ggtitle("June interaction")
+plot(p)
+
+a<-loo(model_int_ext,model_interaction, reloo=reloo)
+print("Model comparison:")
+print(a$diffs)
+
+
+
+```
+
+### Linear mixed effects model: July
+
+Tests:
+1) Do hybrid vs aquilonia nests differ in their internal temperature accounting for external T, and for year effects (2021 cooler): NO. However, internal and external temperatures are positively related.
+2) As above, but with an interaction between hybrid status and external temperature: NO, nor is there an interaction with external temperature. The linear effect of external temperature on internal temperature is significant. 
+
+Model fitting good: Rhat values 1.02 or less and ESS values greater than 600.
+
+Model comparison: Interaction does not improve the model fit. Both models equally good.
+
+
+```{r ant_temp_models_Jul, echo=FALSE}
+
+selmonth = Model_data[grep("-07-", Model_data$Date),]
+
+model_int_ext = brm(InternalT ~ status + Year + ExternalT + (1|nestID), data = selmonth, 
+                    prior = prior, iter = niter, seed = seed, cores = cores, silent = silent,
+                    refresh = refresh, save_pars = save_pars,
+                    file = "../models/Jul_int_ext")
+
+model_interaction = brm(InternalT ~ Year + status*ExternalT + (1|nestID), data = selmonth, 
+                    prior = prior, iter = niter, seed = seed, cores = cores, silent = silent,
+                    refresh = refresh, save_pars = save_pars,
+                    file = "../models/Jul_interaction")
+
+summary(model_int_ext)
+p <- conditional_effects(model_int_ext, effects = "ExternalT:status") 
+p <- plot(p,plot=FALSE) [[1]] + ggtitle("July")
+plot(p)
+summary(model_interaction)
+p <- conditional_effects(model_interaction, effects = "ExternalT:status") 
+p <- plot(p,plot=FALSE) [[1]] + ggtitle("July interaction")
+plot(p)
+
+a<-loo(model_int_ext,model_interaction, reloo=reloo)
+print("Model comparison:")
+print(a$diffs)
+
+
+```

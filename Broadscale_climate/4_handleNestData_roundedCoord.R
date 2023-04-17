@@ -20,9 +20,13 @@ Xvars.all.table <- data.frame(var = Xvars.all,
                               var.base = c("Loc","Loc",rep(Climvars,each=3)),
                               year = c("ETRS.TM35FIN_Y","ETRS.TM35FIN_X",rep(tempyears,8)))
 
+# Full data
+subdata <- antdata
+subdata[Xvars.all] <- scale(subdata[Xvars.all])
+
 # Data without Åland nests
 mainlandNests <- which(antdata$ETRS.TM35FIN_X>150000)
 subdata_noAL <- antdata[mainlandNests,]
 subdata_noAL[Xvars.all] <- scale(subdata_noAL[Xvars.all])
 
-save(antdata, subdata_noAL, Xvars.all,Xvars.all.table,file="data/nestdata.RData")
+save(antdata, subdata, subdata_noAL, Xvars.all,Xvars.all.table,file="data/nestdata.RData")
